@@ -1,0 +1,188 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>3D Scene Overview map | Sample | ArcGIS API for JavaScript 4.24</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        z-index: -1;
+      }
+
+      #overviewDiv {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 300px;
+        height: 200px;
+        border: 1px solid black;
+        z-index: 1;
+        overflow: hidden;
+      }
+
+      #extentDiv {
+        background-color: rgba(0, 0, 0, 0.5);
+        position: absolute;
+        z-index: 2;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.24/"></script>
+
+    <script>
+      require(["esri/Map", "esri/views/SceneView", "esri/views/MapView", "esri/Graphic", "esri/core/reactiveUtils", "esri/core/promiseUtils"], (
+        Map,
+        SceneView,
+        MapView,
+        Graphic,
+        reactiveUtils,
+        promiseUtils
+      ) => {
+        // Create a Map with a basemap, to be used with in the main view
+        const overviewMap = new Map({
+          basemap: "gray-vector",
+          ground: "world-elevation"
+        });
+
+        // Create another Map, to be used in the overview "view"
+        const mainMap = new Map({
+          basemap: "topo-vector"
+        });
+
+        // Create the MapView
+        const mainView = new MapView({
+          container: "viewDiv",
+          map: mainMap,
+          center:{
+            x:0,
+            y:50
+          },
+          zoom: 6,
+          constraints: {
+            rotationEnabled: false
+          }
+        });
+
+        // Create the SceneView for overview map
+        const mapView = new SceneView({
+          container: "overviewDiv",
+          map: overviewMap,
+          alphaCompositingEnabled: true,  
+          environment:{
+              background: {
+                type: "color",
+                color: [255, 252, 244, 1]
+              },
+              lighting: {
+                type: "virtual"
+              },
+              atmosphereEnabled: false,
+              starsEnabled:false
+            },
+          camera: {
+            position: {
+              spatialReference: {
+                latestWkid: 3857,
+                wkid: 102100
+              },
+              x: 0,
+              y: 5000000,
+              z: 17000000
+            },
+            heading: 0,
+            tilt: 0
+          }
+        });
+
+        // Remove the default widgets
+        mapView.ui.components = [];
+
+        mapView.when(() => {
+          mainView.when(() => {
+            setup();
+          });
+        });
+
+        const extentDebouncer = promiseUtils.debounce(() => {
+          if (mainView.stationary) {
+            mapView.goTo({
+              center: mainView.center,
+              scale:
+                mainView.scale *
+                2 *
+                Math.max(
+                  mainView.width / mapView.width,
+                  mainView.height / mapView.height
+                )
+            });
+          }
+        });
+
+        function setup() {
+          const extent3Dgraphic = new Graphic({
+            geometry: null,
+            symbol: {
+              type: "simple-fill",
+              color: [0, 0, 0, 0],
+              outline:  {
+                width: 1,
+                color: [255, 0, 0, 1]
+              }
+            }
+          });
+          mapView.graphics.add(extent3Dgraphic);
+
+          reactiveUtils.watch(
+            () => mainView.extent,
+            (extent) => {
+              // Sync the overview map location
+              // whenever the 3d view is stationary
+              extentDebouncer().then(() => {
+                extent3Dgraphic.geometry = extent;
+              });
+            },
+            {
+              initial: true
+            }
+          );
+        }
+        //sync map and scene views
+        //const views = [mainView, mapView];
+        const views = [view1, view2];
+        let active;
+
+        const sync = (source) => {
+          if (!active || !active.viewpoint || active !== source) {
+            return;
+          }
+
+          for (const view of views) {
+            if (view !== active) {
+              view.viewpoint = active.viewpoint;
+            }
+          }
+        };
+
+        for (const view of views) {
+          view.watch(["interacting", "animation"], () => {
+            active = view;
+            sync(active);
+          });
+
+          view.watch("viewpoint", () => sync(view));
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="overviewDiv"><div id="extentDiv"></div></div>
+  </body>
+</html>
