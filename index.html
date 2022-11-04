@@ -34,38 +34,39 @@
 
     <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/light/main.css" />
     <script src="https://js.arcgis.com/4.24/"></script>
+    <script type="module" src=https://js.arcgis.com/calcite-components/1.0.0-beta.95/calcite.esm.js></script>
+    <link rel="stylesheet" type="text/css" href=https://js.arcgis.com/calcite-components/1.0.0-beta.95/calcite.css />
 
-    <script>
-      require(["esri/Map", "esri/views/SceneView", "esri/views/MapView", "esri/Graphic", "esri/core/reactiveUtils", "esri/core/promiseUtils","esri/geometry/projection","esri/geometry/SpatialReference","esri/Basemap","esri/geometry/Extent","esri/geometry/Point"], (
-        Map,
-        SceneView,
-        MapView,
-        Graphic,
-        reactiveUtils,
-        promiseUtils,
-        projection,
-        SpatialReference,
-        Basemap,
-        Extent,
-        Point
-      ) => {
+    <script type="module">
+      import MapView from 'https://js.arcgis.com/4.24/@arcgis/core/views/MapView.js';
+      import Map from 'https://js.arcgis.com/4.24/@arcgis/core/Map.js';
+      import SpatialReference from 'https://js.arcgis.com/4.24/@arcgis/core/geometry/SpatialReference.js';
+      import * as reactiveUtils from 'https://js.arcgis.com/4.24/@arcgis/core/core/reactiveUtils.js';
+      import SceneView from "https://js.arcgis.com/4.24/@arcgis/core/views/SceneView.js";
+      import Graphic from "https://js.arcgis.com/4.24/@arcgis/core/Graphic.js";
+      import * as promiseUtils from "https://js.arcgis.com/4.24/@arcgis/core/core/promiseUtils.js";
+      import * as projection from "https://js.arcgis.com/4.24/@arcgis/core/geometry/projection.js";
+      import Basemap from "https://js.arcgis.com/4.24/@arcgis/core/Basemap.js";
+      import Extent from "https://js.arcgis.com/4.24/@arcgis/core/geometry/Extent.js";
+      import Point from "https://js.arcgis.com/4.24/@arcgis/core/geometry/Point.js";
+
       // Load the projection engine  
       projection.load().then(function() {
 
         // Create a basemap for the main map
         let mainBasemap = new Basemap({
-                portalItem: {
-                  id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
- //                 id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
- //                 id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
-                }
-              });
+          portalItem: {
+            id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
+//            id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
+//            id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
+          }
+        });
         // Create a Map with a basemap, to be used in the main view
         const mainMap = new Map({
           basemap: mainBasemap,
         });
 
-        // Create another Map, to be used in the overview "view"
+        // Create another Map, to be used in the overview 
         const overviewMap = new Map({
           basemap: "gray-vector",
           ground: "world-elevation"
@@ -76,10 +77,11 @@
           container: "viewDiv",
           map: mainMap,
           spatialReference:{
-            wkid:8857
-//            wkid:4326
-//            wkid:3857
+            wkid:8857   // Equal Earth
+//            wkid:4326     // WGS84
+//            wkid:3857     // WebMercator
           },
+          // Set the initial center point and zoom level
           center:{
             x:-120,
             y:35
@@ -89,46 +91,49 @@
             rotationEnabled: false
           }
         });
-        //transform center point of mapView to WebMercator for SceneViewer
+        // Transform center point of mapView because SceneViewer
+        // can only deal with WGS84 or WebMercator in global mode
         const overviewSpatialReference = new SpatialReference({
-            wkid: 3857
+            wkid: 3857 //WebMercator
           });
         console.log("mainExtent: ",mainView.extent);
 
         let transformCenter = projection.project(mainView.center,overviewSpatialReference);
 
         // Create a SceneView for the overview map
-        const overView = new SceneView({
-          container: "overviewDiv",
-          map: overviewMap,
-          viewingMode: "global",
-          alphaCompositingEnabled: true,  
-          environment:{
-              background: {
-                type: "color",
-                color: [255, 252, 244, 1]
-              },
-              lighting: {
-                type: "virtual"
-              },
-              atmosphereEnabled: false,
-              starsEnabled:false
-            },
-          camera: {
-            position: {
-              spatialReference: {
-                latestWkid: 3857,
-                wkid: 102100
-              },
-              x: transformCenter.x,
-              y: transformCenter.y,
-              z: 17000000
-            },
-            heading: 0,
-            tilt: 0
-          }
-        });
 
+          const overView = new SceneView({
+            container: "overviewDiv",
+            map: overviewMap,
+            viewingMode: "global",
+            alphaCompositingEnabled: true,  
+            environment:{
+                background: {
+                  type: "color",
+                  color: [247, 247, 247, 1]
+                },
+                lighting: {
+                  type: "virtual"
+                },
+                atmosphereEnabled: false,
+                starsEnabled:false
+              },
+            camera: {
+              position: {
+                spatialReference: {
+                  latestWkid: 3857,
+                  wkid: 102100
+                },
+                // Get center point from main map (after transform)
+                x: transformCenter.x,
+                y: transformCenter.y,
+                z: 17000000
+              },
+              heading: 0,
+              tilt: 0
+            }
+          });
+        
         // Remove the default widgets
         overView.ui.components = [];
 
@@ -177,20 +182,19 @@
  
           reactiveUtils.watch(
             () => mainView.extent,
-              (extent) => {
               // Sync the overview map location
               // whenever the main view is stationary
-              let transformExtent = projection.project(extent,overviewSpatialReference);
-              extentDebouncer().then(() => {
-                extent3Dgraphic.geometry = transformExtent;
-              });
-            },
-            {
+              (extent) => {
+                //transform the mainView extent into something that SceneViewer can handle
+                const transformExtent = projection.project(extent,overviewSpatialReference);
+                  extentDebouncer().then(() => {
+                    extent3Dgraphic.geometry = transformExtent;
+                  });
+                },
+              {
               initial: true
-            }
+              }
           );
-          console.log("mainExtent: ",mainView.extent);
-          console.log("transExtent: ",transformExtent);
         }
       });
 
@@ -220,7 +224,6 @@
           view.watch("viewpoint", () => sync(view));
         }*/
       
-      });
     </script>
   </head>
 
