@@ -49,20 +49,20 @@
         Extent,
         Point
       ) => {
+      // Load the projection engine  
       projection.load().then(function() {
+
+        // Create a basemap for the main map
         let mainBasemap = new Basemap({
                 portalItem: {
- //                 id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
-                  id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
+                  id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
+ //                 id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
  //                 id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
                 }
               });
         // Create a Map with a basemap, to be used in the main view
         const mainMap = new Map({
           basemap: mainBasemap,
- /*         spatialReference:{
-            wkid:8857
-          },*/
         });
 
         // Create another Map, to be used in the overview "view"
@@ -76,13 +76,13 @@
           container: "viewDiv",
           map: mainMap,
           spatialReference:{
-//            wkid:8857
-            wkid:4326
+            wkid:8857
+//            wkid:4326
 //            wkid:3857
           },
           center:{
-            x:0,
-            y:50
+            x:-120,
+            y:35
           },
           zoom: 5,
           constraints: {
@@ -132,8 +132,6 @@
         // Remove the default widgets
         overView.ui.components = [];
 
-
-
         //output to console  
         console.log("mainSR: ",mainView.spatialReference.wkid);
         console.log("variableSR: ",overviewSpatialReference.wkid);
@@ -150,7 +148,7 @@
         const extentDebouncer = promiseUtils.debounce(() => {
           if (mainView.stationary) {
             overView.goTo({
-              center: transformCenter,
+              center: mainView.center,
               scale:
                 mainView.scale *
                 2 *
@@ -176,16 +174,13 @@
           });
           overView.graphics.add(extent3Dgraphic);
 
-        let transformExtent = projection.project(mainView.extent,overviewSpatialReference);
-/*        const transformExtent = new Extent({
-          extent: transformExtent
-        })*/
-
+ 
           reactiveUtils.watch(
             () => mainView.extent,
-             (transformExtent) => {
+              (extent) => {
               // Sync the overview map location
               // whenever the main view is stationary
+              let transformExtent = projection.project(extent,overviewSpatialReference);
               extentDebouncer().then(() => {
                 extent3Dgraphic.geometry = transformExtent;
               });
