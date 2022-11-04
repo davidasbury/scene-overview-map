@@ -2,7 +2,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>3D Scene Overview map | Sample | ArcGIS API for JavaScript 4.24</title>
+    <title>3D Scene Overview map</title>
     <style>
       html,
       body,
@@ -16,10 +16,10 @@
 
       #overviewDiv {
         position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 300px;
-        height: 200px;
+        bottom: 18px;
+        right: 220px;
+        width: 200px;
+        height: 133px;
         border: 1px solid black;
         z-index: 1;
         overflow: hidden;
@@ -36,43 +36,72 @@
     <script src="https://js.arcgis.com/4.24/"></script>
 
     <script>
-      require(["esri/Map", "esri/views/SceneView", "esri/views/MapView", "esri/Graphic", "esri/core/reactiveUtils", "esri/core/promiseUtils"], (
+      require(["esri/Map", "esri/views/SceneView", "esri/views/MapView", "esri/Graphic", "esri/core/reactiveUtils", "esri/core/promiseUtils","esri/geometry/projection","esri/geometry/SpatialReference","esri/Basemap","esri/geometry/Extent","esri/geometry/Point"], (
         Map,
         SceneView,
         MapView,
         Graphic,
         reactiveUtils,
-        promiseUtils
+        promiseUtils,
+        projection,
+        SpatialReference,
+        Basemap,
+        Extent,
+        Point
       ) => {
-        // Create a Map with a basemap, to be used with in the main view
+      projection.load().then(function() {
+        let mainBasemap = new Basemap({
+                portalItem: {
+ //                 id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
+                  id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
+ //                 id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
+                }
+              });
+        // Create a Map with a basemap, to be used in the main view
+        const mainMap = new Map({
+          basemap: mainBasemap,
+ /*         spatialReference:{
+            wkid:8857
+          },*/
+        });
+
+        // Create another Map, to be used in the overview "view"
         const overviewMap = new Map({
           basemap: "gray-vector",
           ground: "world-elevation"
         });
 
-        // Create another Map, to be used in the overview "view"
-        const mainMap = new Map({
-          basemap: "topo-vector"
-        });
-
-        // Create the MapView
+        // Create the main MapView
         const mainView = new MapView({
           container: "viewDiv",
           map: mainMap,
+          spatialReference:{
+//            wkid:8857
+            wkid:4326
+//            wkid:3857
+          },
           center:{
             x:0,
             y:50
           },
-          zoom: 6,
+          zoom: 5,
           constraints: {
             rotationEnabled: false
           }
         });
+        //transform center point of mapView to WebMercator for SceneViewer
+        const overviewSpatialReference = new SpatialReference({
+            wkid: 3857
+          });
+        console.log("mainExtent: ",mainView.extent);
 
-        // Create the SceneView for overview map
-        const mapView = new SceneView({
+        let transformCenter = projection.project(mainView.center,overviewSpatialReference);
+
+        // Create a SceneView for the overview map
+        const overView = new SceneView({
           container: "overviewDiv",
           map: overviewMap,
+          viewingMode: "global",
           alphaCompositingEnabled: true,  
           environment:{
               background: {
@@ -91,8 +120,8 @@
                 latestWkid: 3857,
                 wkid: 102100
               },
-              x: 0,
-              y: 5000000,
+              x: transformCenter.x,
+              y: transformCenter.y,
               z: 17000000
             },
             heading: 0,
@@ -101,30 +130,39 @@
         });
 
         // Remove the default widgets
-        mapView.ui.components = [];
+        overView.ui.components = [];
 
-        mapView.when(() => {
+
+
+        //output to console  
+        console.log("mainSR: ",mainView.spatialReference.wkid);
+        console.log("variableSR: ",overviewSpatialReference.wkid);
+        console.log("mainCenterX: ",mainView.center.x,"mainCenterY: ",mainView.center.y);
+        console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
+        console.log("mainScale: ",mainView.scale)
+
+        overView.when(() => {
           mainView.when(() => {
-            setup();
+            drawExtentAndSync();
           });
         });
 
         const extentDebouncer = promiseUtils.debounce(() => {
           if (mainView.stationary) {
-            mapView.goTo({
-              center: mainView.center,
+            overView.goTo({
+              center: transformCenter,
               scale:
                 mainView.scale *
                 2 *
                 Math.max(
-                  mainView.width / mapView.width,
-                  mainView.height / mapView.height
+                  mainView.width / overView.width,
+                  mainView.height / overView.height
                 )
             });
           }
         });
-
-        function setup() {
+      
+        function drawExtentAndSync() {
           const extent3Dgraphic = new Graphic({
             geometry: null,
             symbol: {
@@ -136,24 +174,33 @@
               }
             }
           });
-          mapView.graphics.add(extent3Dgraphic);
+          overView.graphics.add(extent3Dgraphic);
+
+        let transformExtent = projection.project(mainView.extent,overviewSpatialReference);
+/*        const transformExtent = new Extent({
+          extent: transformExtent
+        })*/
 
           reactiveUtils.watch(
             () => mainView.extent,
-            (extent) => {
+             (transformExtent) => {
               // Sync the overview map location
-              // whenever the 3d view is stationary
+              // whenever the main view is stationary
               extentDebouncer().then(() => {
-                extent3Dgraphic.geometry = extent;
+                extent3Dgraphic.geometry = transformExtent;
               });
             },
             {
               initial: true
             }
           );
+          console.log("mainExtent: ",mainView.extent);
+          console.log("transExtent: ",transformExtent);
         }
-        //sync map and scene views
-        //const views = [mainView, mapView];
+      });
+
+ /*       //sync map and scene views
+        //const views = [mainView, overView];
         const views = [view1, view2];
         let active;
 
@@ -176,7 +223,8 @@
           });
 
           view.watch("viewpoint", () => sync(view));
-        }
+        }*/
+      
       });
     </script>
   </head>
