@@ -196,21 +196,20 @@
               }
           );
         }
-      });
+      
 
  /*       //sync map and scene views
-        //const views = [mainView, overView];
-        const views = [view1, view2];
+        const views = [mainView, overView];
         let active;
-
         const sync = (source) => {
           if (!active || !active.viewpoint || active !== source) {
             return;
           }
 
           for (const view of views) {
+            let transformViewpoint = projection.project(active.viewpoint,overviewSpatialReference);
             if (view !== active) {
-              view.viewpoint = active.viewpoint;
+              view.transformViewpoint = active.transformViewpoint;
             }
           }
         };
@@ -223,7 +222,7 @@
 
           view.watch("viewpoint", () => sync(view));
         }*/
-      
+      });
     </script>
   </head>
 
