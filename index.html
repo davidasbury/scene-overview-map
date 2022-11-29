@@ -17,10 +17,12 @@
       #overviewDiv {
         position: absolute;
         bottom: 18px;
-        right: 220px;
-        width: 200px;
+        right: 8px;
+        width: 133px;
         height: 133px;
-        border: 1px solid black;
+        border-radius: 50%;
+        background-color: transparent;
+        box-shadow: 8px 10px 10px grey;
         z-index: 1;
         overflow: hidden;
       }
@@ -110,7 +112,7 @@
             environment:{
                 background: {
                   type: "color",
-                  color: [247, 247, 247, 1]
+                  color: [247, 247, 247, 0]
                 },
                 lighting: {
                   type: "virtual"
@@ -127,7 +129,7 @@
                 // Get center point from main map (after transform)
                 x: transformCenter.x,
                 y: transformCenter.y,
-                z: 17000000
+                z: 12000000
               },
               heading: 0,
               tilt: 0
