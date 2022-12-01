@@ -122,10 +122,7 @@
               },
             camera: {
               position: {
-                spatialReference: {
-                  latestWkid: 3857,
-                  wkid: 102100
-                },
+                spatialReference: overviewSpatialReference,
                 // Get center point from main map (after transform)
                 x: transformCenter.x,
                 y: transformCenter.y,
@@ -141,7 +138,7 @@
 
         //output to console  
         console.log("mainSR: ",mainView.spatialReference.wkid);
-        console.log("variableSR: ",overviewSpatialReference.wkid);
+        console.log("overSR: ",overviewSpatialReference.wkid);
         console.log("mainCenterX: ",mainView.center.x,"mainCenterY: ",mainView.center.y);
         console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
         console.log("mainScale: ",mainView.scale)
@@ -153,9 +150,15 @@
         });
 
         const extentDebouncer = promiseUtils.debounce(() => {
-          if (mainView.stationary) {
+  //        if (mainView.stationary) {
+            transformCenter = projection.project(mainView.center,overviewSpatialReference);
             overView.goTo({
-              center: mainView.center,
+                position: {
+                  spatialReference: overviewSpatialReference,
+                  x:transformCenter.x,
+                  y:transformCenter.y,
+                  z:12000000,
+                }, //mainView.center,
               scale:
                 mainView.scale *
                 2 *
@@ -164,9 +167,19 @@
                   mainView.height / overView.height
                 )
             });
-          }
+          
+          console.log("mainCenterX: ",mainView.center.x);
+          console.log("mainCenterY: ",mainView.center.y);
+          console.log("transCenterX ",transformCenter.x);
+          console.log("transCenterY ",transformCenter.y);
+          console.log("overCenterX: ",overView.center.x);
+          console.log("overCenterY: ",overView.center.y);
+ //         }
         });
       
+       
+ //       console.log("overView Y:",overView.center.y);
+
         function drawExtentAndSync() {
           const extent3Dgraphic = new Graphic({
             geometry: null,
@@ -184,9 +197,9 @@
  
           reactiveUtils.watch(
             () => mainView.extent,
-              // Sync the overview map location
+              // Draw the overview map extent
               // whenever the main view is stationary
-              (extent) => {
+               (extent) => {
                 //transform the mainView extent into something that SceneViewer can handle
                 const transformExtent = projection.project(extent,overviewSpatialReference);
                   extentDebouncer().then(() => {
