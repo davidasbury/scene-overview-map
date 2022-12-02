@@ -52,8 +52,8 @@
       import Extent from "https://js.arcgis.com/4.24/@arcgis/core/geometry/Extent.js";
       import Point from "https://js.arcgis.com/4.24/@arcgis/core/geometry/Point.js";
 
-      // Load the projection engine  
-      projection.load().then(function() {
+        // Load the projection engine  
+        projection.load().then(function() {
 
         // Create a basemap for the main map
         let mainBasemap = new Basemap({
@@ -63,12 +63,12 @@
 //            id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
           }
         });
-        // Create a Map with a basemap, to be used in the main view
+        // Create a Map with a basemap (from above), to be used in the mainView
         const mainMap = new Map({
           basemap: mainBasemap,
         });
 
-        // Create another Map, to be used in the overview 
+        // Create another Map, to be used in the overview Scene
         const overviewMap = new Map({
           basemap: "gray-vector",
           ground: "world-elevation"
@@ -98,12 +98,10 @@
         const overviewSpatialReference = new SpatialReference({
             wkid: 3857 //WebMercator
           });
-        console.log("mainExtent: ",mainView.extent);
 
         let transformCenter = projection.project(mainView.center,overviewSpatialReference);
 
         // Create a SceneView for the overview map
-
           const overView = new SceneView({
             container: "overviewDiv",
             map: overviewMap,
@@ -136,6 +134,51 @@
         // Remove the default widgets
         overView.ui.components = [];
 
+        // disables all navigation in the overView
+        overView
+          .when(disableNavigation)
+
+        function disableNavigation(view) {
+          view.popup.dockEnabled = true;
+
+          // Removes the zoom action on the popup
+          view.popup.actions = [];
+
+          // stops propagation of default behavior when an event fires
+          function stopEvtPropagation(event) {
+            event.stopPropagation();
+          }
+
+          // disable mouse wheel scroll zooming on the view
+          view.navigation.mouseWheelZoomEnabled = false;
+
+          // disable zooming via double-click on the view
+          view.on("double-click", stopEvtPropagation);
+
+          // disable zooming out via double-click + Control on the view
+          view.on("double-click", ["Control"], stopEvtPropagation);
+
+          // disables pinch-zoom and panning on the view
+          view.navigation.browserTouchPanEnabled = false;
+          view.on("drag", stopEvtPropagation);
+
+          // disable the view's zoom box to prevent the Shift + drag
+          // and Shift + Control + drag zoom gestures.
+          view.on("drag", ["Shift"], stopEvtPropagation);
+          view.on("drag", ["Shift", "Control"], stopEvtPropagation);
+
+          // prevents zooming and rotation with the indicated keys
+          view.on("key-down", function(event) {
+            var prohibitedKeys = ["+", "-", "_", "=", "a", "d"];
+            var keyPressed = event.key.toLowerCase();
+            if (prohibitedKeys.indexOf(keyPressed) !== -1) {
+              event.stopPropagation();
+            }
+          });
+
+          return view;
+        }
+        
         //output to console  
         console.log("mainViewSR: ",mainView.spatialReference.wkid);
         console.log("overViewSR: ",overviewSpatialReference.wkid);
