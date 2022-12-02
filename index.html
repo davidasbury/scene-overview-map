@@ -137,11 +137,10 @@
         overView.ui.components = [];
 
         //output to console  
-        console.log("mainSR: ",mainView.spatialReference.wkid);
-        console.log("overSR: ",overviewSpatialReference.wkid);
-        console.log("mainCenterX: ",mainView.center.x,"mainCenterY: ",mainView.center.y);
-        console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
-        console.log("mainScale: ",mainView.scale)
+        console.log("mainViewSR: ",mainView.spatialReference.wkid);
+        console.log("overViewSR: ",overviewSpatialReference.wkid);
+        console.log("mainViewScale: ",mainView.scale);
+        console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
 
         overView.when(() => {
           mainView.when(() => {
@@ -150,36 +149,18 @@
         });
 
         const extentDebouncer = promiseUtils.debounce(() => {
-  //        if (mainView.stationary) {
-            transformCenter = projection.project(mainView.center,overviewSpatialReference);
-            overView.goTo({
-                position: {
-                  spatialReference: overviewSpatialReference,
-                  x:transformCenter.x,
-                  y:transformCenter.y,
-                  z:12000000,
-                }, //mainView.center,
-              scale:
-                mainView.scale *
-                2 *
-                Math.max(
-                  mainView.width / overView.width,
-                  mainView.height / overView.height
-                )
-            });
-          
-          console.log("mainCenterX: ",mainView.center.x);
-          console.log("mainCenterY: ",mainView.center.y);
-          console.log("transCenterX ",transformCenter.x);
-          console.log("transCenterY ",transformCenter.y);
-          console.log("overCenterX: ",overView.center.x);
-          console.log("overCenterY: ",overView.center.y);
- //         }
+          //sync the overview Scene center when the main map moves
+          transformCenter = projection.project(mainView.center,overviewSpatialReference);
+          overView.goTo({
+              position: {
+                spatialReference: overviewSpatialReference,
+                x:transformCenter.x,
+                y:transformCenter.y,
+                z:12000000,
+              }, 
+          });
         });
       
-       
- //       console.log("overView Y:",overView.center.y);
-
         function drawExtentAndSync() {
           const extent3Dgraphic = new Graphic({
             geometry: null,
@@ -197,47 +178,24 @@
  
           reactiveUtils.watch(
             () => mainView.extent,
-              // Draw the overview map extent
-              // whenever the main view is stationary
+              // Sync the overview map 
+              // whenever the main view moves
                (extent) => {
                 //transform the mainView extent into something that SceneViewer can handle
                 const transformExtent = projection.project(extent,overviewSpatialReference);
                   extentDebouncer().then(() => {
                     extent3Dgraphic.geometry = transformExtent;
                   });
+                console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
+                console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
+                console.log("overViewCenterX: ",overView.center.x,"overViewCenterY: ",overView.center.y);
                 },
-              {
-              initial: true
-              }
+                {
+                initial: true
+                }
           );
         }
-      
-
- /*       //sync map and scene views
-        const views = [mainView, overView];
-        let active;
-        const sync = (source) => {
-          if (!active || !active.viewpoint || active !== source) {
-            return;
-          }
-
-          for (const view of views) {
-            let transformViewpoint = projection.project(active.viewpoint,overviewSpatialReference);
-            if (view !== active) {
-              view.transformViewpoint = active.transformViewpoint;
-            }
-          }
-        };
-
-        for (const view of views) {
-          view.watch(["interacting", "animation"], () => {
-            active = view;
-            sync(active);
-          });
-
-          view.watch("viewpoint", () => sync(view));
-        }*/
-      });
+       });
     </script>
   </head>
 
