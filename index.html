@@ -59,35 +59,56 @@
         // Load the projection engine  
         projection.load().then(function() {
 
-        //get parameters from the url
+        // Get parameters from the url: (1) ?webmap= and (2) &overview=
         const { query } = urlUtils.urlToObject(window.location.href);
-//        console.log("urlParams: ", query.webmap)
+        // show the parameters in the console
+/*        var ids;
+        for (ids in query) {
+            if (query.hasOwnProperty(ids)) {
+                console.log(ids,"id: ", query[ids]);
+            }
+        }*/
+//        console.log("urlParams: ", query);
 
-/*        // Create a basemap for the main map
-        let mainBasemap = new Basemap({
+        // Create a default map to be used if no url parameter is specified
+        const defaultMap = new WebMap({
           portalItem: {
-            id: query.id
-//            id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
+            id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
 //            id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
 //            id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
           }
-        });*/
-        // Create a Map with a basemap (from above), to be used in the mainView
-        const mainMap = new WebMap({
-          portalItem: {
-            id: query.webmap
-          }
-//          basemap: mainBasemap,
+        });
+        // Create a default overview to be used if no url parameter is specified
+        const defaultOverview = new WebScene({
+          basemap: "gray-vector",
+          ground: "world-elevation"
+          // id: 076b59c9861e4a61b438ddbc4ee2a999 //blue ocean
         });
 
-        // Create another Map, to be used in the overview Scene
-        const overviewMap = new WebScene({
-          portalItem: {
-            id: query.overview
-          }
-//          basemap: "gray-vector",
-//          ground: "world-elevation"
-        });
+        if (!query) {
+          var mainMap = defaultMap;
+        }
+        else {
+          // Create a Map from the first url parameter for the mainView
+          var mainMap = new WebMap({
+            portalItem: {
+              id: query.webmap
+            }
+          });
+         }
+
+        if (!query) {
+          var overviewMap = defaultOverview;
+        }
+        else {
+          // Create another Map from the second url parameter to be used in the overview Scene
+          var overviewMap = new WebScene({
+            portalItem: {
+              id: query.overview
+            }
+          });
+        }
+
 
         // Create the main MapView
         const mainView = new MapView({
