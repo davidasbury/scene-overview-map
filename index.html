@@ -41,9 +41,11 @@
 
     <script type="module">
       import MapView from 'https://js.arcgis.com/4.24/@arcgis/core/views/MapView.js';
+      import WebMap from "https://js.arcgis.com/4.24/@arcgis/core/WebMap.js";
       import Map from 'https://js.arcgis.com/4.24/@arcgis/core/Map.js';
       import SpatialReference from 'https://js.arcgis.com/4.24/@arcgis/core/geometry/SpatialReference.js';
       import * as reactiveUtils from 'https://js.arcgis.com/4.24/@arcgis/core/core/reactiveUtils.js';
+      import WebScene from "https://js.arcgis.com/4.24/@arcgis/core/WebScene.js";
       import SceneView from "https://js.arcgis.com/4.24/@arcgis/core/views/SceneView.js";
       import Graphic from "https://js.arcgis.com/4.24/@arcgis/core/Graphic.js";
       import * as promiseUtils from "https://js.arcgis.com/4.24/@arcgis/core/core/promiseUtils.js";
@@ -51,27 +53,39 @@
       import Basemap from "https://js.arcgis.com/4.24/@arcgis/core/Basemap.js";
       import Extent from "https://js.arcgis.com/4.24/@arcgis/core/geometry/Extent.js";
       import Point from "https://js.arcgis.com/4.24/@arcgis/core/geometry/Point.js";
+      import * as urlUtils from "https://js.arcgis.com/4.24/@arcgis/core/core/urlUtils.js";
 
         // Load the projection engine  
         projection.load().then(function() {
 
-        // Create a basemap for the main map
+        //get parameters from the url
+        const { query } = urlUtils.urlToObject(window.location.href);
+        console.log("urlParams: ", query.webmap)
+
+/*        // Create a basemap for the main map
         let mainBasemap = new Basemap({
           portalItem: {
-            id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
+            id: query.id
+//            id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
 //            id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
 //            id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
           }
-        });
+        });*/
         // Create a Map with a basemap (from above), to be used in the mainView
-        const mainMap = new Map({
-          basemap: mainBasemap,
+        const mainMap = new WebMap({
+          portalItem: {
+            id: query.webmap
+          }
+//          basemap: mainBasemap,
         });
 
         // Create another Map, to be used in the overview Scene
-        const overviewMap = new Map({
-          basemap: "gray-vector",
-          ground: "world-elevation"
+        const overviewMap = new WebScene({
+          portalItem: {
+            id: query.overview
+          }
+//          basemap: "gray-vector",
+//          ground: "world-elevation"
         });
 
         // Create the main MapView
@@ -180,6 +194,7 @@
         }
         
         //output to console  
+        console.log("mainViewCenter.X: ",mainView.center.x);
         console.log("mainViewSR: ",mainView.spatialReference.wkid);
         console.log("overViewSR: ",overviewSpatialReference.wkid);
         console.log("mainViewScale: ",mainView.scale);
@@ -193,15 +208,17 @@
 
         const extentDebouncer = promiseUtils.debounce(() => {
           //sync the overview Scene center when the main map moves
-          transformCenter = projection.project(mainView.center,overviewSpatialReference);
-          overView.goTo({
-              position: {
-                spatialReference: overviewSpatialReference,
-                x:transformCenter.x,
-                y:transformCenter.y,
-                z:12000000,
-              }, 
-          });
+          if (!!transformCenter.x || !!transformCenter.y){
+            transformCenter = projection.project(mainView.center,overviewSpatialReference);
+            overView.goTo({
+                position: {
+                  spatialReference: overviewSpatialReference,
+                  x:transformCenter.x,
+                  y:transformCenter.y,
+                  z:12000000,
+                }, 
+            });
+          }  
         });
       
         function drawExtentAndSync() {
@@ -225,17 +242,19 @@
               // whenever the main view moves
                (extent) => {
                 //transform the mainView extent into something that SceneViewer can handle
-                const transformExtent = projection.project(extent,overviewSpatialReference);
-                  extentDebouncer().then(() => {
-                    extent3Dgraphic.geometry = transformExtent;
-                  });
+                if (!!transformCenter.x || !!transformCenter.y) {
+                  const transformExtent = projection.project(extent,overviewSpatialReference);
+                    extentDebouncer().then(() => {
+                      extent3Dgraphic.geometry = transformExtent;
+                    });
+                  }
                 console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
                 console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
                 console.log("overViewCenterX: ",overView.center.x,"overViewCenterY: ",overView.center.y);
-                },
-                {
-                initial: true
-                }
+                  },
+                  {
+                  initial: true
+                  }
           );
         }
        });
