@@ -62,13 +62,15 @@
         // Get parameters from the url: (1) ?webmap= and (2) &overview=
         const { query } = urlUtils.urlToObject(window.location.href);
         // show the parameters in the console
-/*        var ids;
-        for (ids in query) {
-            if (query.hasOwnProperty(ids)) {
-                console.log(ids,"id: ", query[ids]);
+/*        var keys;
+        for (keys in query) {
+            if (query.hasOwnProperty(keys)) {
+                console.log(keys,"id: ", query[keys]);
             }
         }*/
 //        console.log("urlParams: ", query);
+        const param1 = query[0];
+        const param2 = query[1];
 
         // Create a default map to be used if no url parameter is specified
         const defaultMap = new WebMap({
@@ -76,13 +78,14 @@
             id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
 //            id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
 //            id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
+//            id: "2d50c2ddfef24002bff0dac1687e51c6" // Elephant story map
           }
         });
         // Create a default overview to be used if no url parameter is specified
         const defaultOverview = new WebScene({
           basemap: "gray-vector",
           ground: "world-elevation"
-          // id: 076b59c9861e4a61b438ddbc4ee2a999 //blue ocean
+          // id: 67ab7f7c535c4687b6518e6d2343e8a2 //ocean basemap
         });
 
         if (!query) {
@@ -97,12 +100,12 @@
           });
          }
 
-        if (!query) {
+        if (!query[1]) {
           var overviewMap = defaultOverview;
         }
         else {
           // Create another Map from the second url parameter to be used in the overview Scene
-          var overviewMap = new WebScene({
+          var overviewMap = new WebMap({
             portalItem: {
               id: query.overview
             }
@@ -237,7 +240,7 @@
 
         const extentDebouncer = promiseUtils.debounce(() => {
           //sync the overview Scene center when the main map moves
-          if (!!transformCenter.x || !!transformCenter.y){
+//          if (!!transformCenter.x || !!transformCenter.y){
             transformCenter = projection.project(mainView.center,overviewSpatialReference);
             overView.goTo({
                 position: {
@@ -247,7 +250,7 @@
                   z:12000000,
                 }, 
             });
-          }  
+//          }  
         });
       
         function drawExtentAndSync() {
@@ -271,12 +274,12 @@
               // whenever the main view moves
                (extent) => {
                 //transform the mainView extent into something that SceneViewer can handle
-                if (!!transformCenter.x || !!transformCenter.y) {
+//                if (!!transformCenter.x || !!transformCenter.y) {
                   const transformExtent = projection.project(extent,overviewSpatialReference);
                     extentDebouncer().then(() => {
                       extent3Dgraphic.geometry = transformExtent;
                     });
-                  }
+//                  }
 //                console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
 //                console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
 //                console.log("overViewCenterX: ",overView.center.x,"overViewCenterY: ",overView.center.y);
