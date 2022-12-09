@@ -60,6 +60,7 @@
         projection.load().then(function() {
 
         // Get parameters from the url: (1) ?webmap= and (2) &overview=
+        // Example <baseurl>?webmap=8dda0e7b5e2d4fafa80132d59122268c&overview=67ab7f7c535c4687b6518e6d2343e8a2
         const { query } = urlUtils.urlToObject(window.location.href);
         // show the parameters in the console
 /*        var keys;
@@ -79,7 +80,7 @@
 //            id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
 //            id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
 //            id: "2d50c2ddfef24002bff0dac1687e51c6" // Elephant story map
-//            id: 67ab7f7c535c4687b6518e6d2343e8a2 //ocean basemap
+//            id: "67ab7f7c535c4687b6518e6d2343e8a2" //ocean basemap
           }
         });
 
