@@ -69,8 +69,8 @@
             }
         }*/
 //        console.log("urlParams: ", query);
-        const param1 = query[0];
-        const param2 = query[1];
+//        const param1 = query[0];
+//        const param2 = query[1];
 
         // Create a default map to be used if no url parameter is specified
         const defaultMap = new WebMap({
@@ -79,15 +79,17 @@
 //            id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
 //            id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
 //            id: "2d50c2ddfef24002bff0dac1687e51c6" // Elephant story map
+//            id: 67ab7f7c535c4687b6518e6d2343e8a2 //ocean basemap
           }
         });
+
         // Create a default overview to be used if no url parameter is specified
         const defaultOverview = new WebScene({
           basemap: "gray-vector",
           ground: "world-elevation"
-          // id: 67ab7f7c535c4687b6518e6d2343e8a2 //ocean basemap
         });
 
+        // If no parameters are specified in the url, display the default map
         if (!query) {
           var mainMap = defaultMap;
         }
@@ -100,6 +102,7 @@
           });
          }
 
+        // If a second parameter is not specified in the url, display the default overview 
         if (!query) {
           var overviewMap = defaultOverview;
         }
@@ -112,16 +115,10 @@
           });
         }
 
-
         // Create the main MapView
         const mainView = new MapView({
           container: "viewDiv",
           map: mainMap,
-/*          spatialReference:{
-            wkid:8857   // Equal Earth
-//            wkid:4326     // WGS84
-//            wkid:3857     // WebMercator
-          },*/
           // Set the initial center point and zoom level
           center:{
             x:-120,
@@ -144,7 +141,6 @@
         const overviewSpatialReference = new SpatialReference({
             wkid: 3857 //WebMercator
           });
-
         let transformCenter = projection.project(mainView.center,overviewSpatialReference);
 
         // Create a SceneView for the overview map
@@ -170,49 +166,39 @@
                 // Get center point from main map (after transform)
                 x: transformCenter.x,
                 y: transformCenter.y,
-                z: 12000000
+                z: 12000000 // Specify a zoom level so the globe will fill the div
               },
               heading: 0,
               tilt: 0
             }
           });
-        
         // Remove the default widgets
         overView.ui.components = [];
 
-        // disables all navigation in the overView
-        overView
-          .when(disableNavigation)
+        // disable all navigation in the overView
+        overView.when(disableNavigation)
 
         function disableNavigation(view) {
           view.popup.dockEnabled = true;
-
           // Removes the zoom action on the popup
           view.popup.actions = [];
-
           // stops propagation of default behavior when an event fires
           function stopEvtPropagation(event) {
             event.stopPropagation();
           }
-
           // disable mouse wheel scroll zooming on the view
           view.navigation.mouseWheelZoomEnabled = false;
-
           // disable zooming via double-click on the view
           view.on("double-click", stopEvtPropagation);
-
           // disable zooming out via double-click + Control on the view
           view.on("double-click", ["Control"], stopEvtPropagation);
-
           // disables pinch-zoom and panning on the view
           view.navigation.browserTouchPanEnabled = false;
           view.on("drag", stopEvtPropagation);
-
           // disable the view's zoom box to prevent the Shift + drag
           // and Shift + Control + drag zoom gestures.
           view.on("drag", ["Shift"], stopEvtPropagation);
           view.on("drag", ["Shift", "Control"], stopEvtPropagation);
-
           // prevents zooming and rotation with the indicated keys
           view.on("key-down", function(event) {
             var prohibitedKeys = ["+", "-", "_", "=", "a", "d"];
@@ -221,7 +207,6 @@
               event.stopPropagation();
             }
           });
-
           return view;
         }
         
@@ -232,6 +217,7 @@
         console.log("mainViewScale: ",mainView.scale);
         console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
 */
+        // Draw main extent on the overview map and sync
         overView.when(() => {
           mainView.when(() => {
             drawExtentAndSync();
@@ -266,23 +252,21 @@
             }
           });
           overView.graphics.add(extent3Dgraphic);
-
  
+          // Sync the overview map whenever the main view moves
           reactiveUtils.watch(
             () => mainView.extent,
-              // Sync the overview map 
-              // whenever the main view moves
-               (extent) => {
+                (extent) => {
                 //transform the mainView extent into something that SceneViewer can handle
-//                if (!!transformCenter.x || !!transformCenter.y) {
+ //                if (!!transformCenter.x || !!transformCenter.y) {
                   const transformExtent = projection.project(extent,overviewSpatialReference);
                     extentDebouncer().then(() => {
                       extent3Dgraphic.geometry = transformExtent;
                     });
-//                  }
-//                console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
-//                console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
-//                console.log("overViewCenterX: ",overView.center.x,"overViewCenterY: ",overView.center.y);
+ //                  }
+ //                console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
+  //                console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
+  //                console.log("overViewCenterX: ",overView.center.x,"overViewCenterY: ",overView.center.y);
                   },
                   {
                   initial: true
