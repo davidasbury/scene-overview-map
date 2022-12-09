@@ -91,12 +91,10 @@
         });
 
         // If no parameters are specified in the url, display the default map
-        if (!query) {
-          var mainMap = defaultMap;
-        }
-        else {
+        let mainMap = defaultMap;
+        if (query && query.webmap) {
           // Create a Map from the first url parameter for the mainView
-          var mainMap = new WebMap({
+          mainMap = new WebMap({
             portalItem: {
               id: query.webmap
             }
@@ -104,12 +102,10 @@
          }
 
         // If a second parameter is not specified in the url, display the default overview 
-        if (!query) {
-          var overviewMap = defaultOverview;
-        }
-        else {
+        let overviewMap = defaultOverview;
+        if (query && query.overview) {
           // Create another Map from the second url parameter to be used in the overview Scene
-          var overviewMap = new WebMap({
+          overviewMap = new WebMap({
             portalItem: {
               id: query.overview
             }
