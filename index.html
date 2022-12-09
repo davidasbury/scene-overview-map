@@ -130,7 +130,6 @@
             rotationEnabled: true
           }
         });
-
         // Add the home button
         let homeWidget = new Home({
           view: mainView
@@ -218,7 +217,7 @@
         console.log("mainViewScale: ",mainView.scale);
         console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
 */
-        // Draw main extent on the overview map and sync
+        // Draw main extent on the overview map and sync the view
         overView.when(() => {
           mainView.when(() => {
             drawExtentAndSync();
