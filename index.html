@@ -114,9 +114,10 @@
           portalItem: {
             id: "1544b585aeba430a8a41b29457f2b580"  //Andy Skinner's Equal Earth basemap
 //            id: "8dda0e7b5e2d4fafa80132d59122268c"  // WGS84 Streets Vector webmap
-//            id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
+//            id: "8d91bd39e873417ea21673e0fee87604" // Nova webmercator basemap
 //            id: "2d50c2ddfef24002bff0dac1687e51c6" // Elephant story map
-//            id: "67ab7f7c535c4687b6518e6d2343e8a2" //ocean basemap
+//            id: "22d1524dde5f4e5b9670545f5b853517" // Fuller basemap
+//            id: "67ab7f7c535c4687b6518e6d2343e8a2" // Ocean basemap
           }
         });
 
@@ -258,7 +259,7 @@
 
         const extentDebouncer = promiseUtils.debounce(() => {
           //sync the overview Scene center when the main map moves
-//          if (!!transformCenter.x || !!transformCenter.y){
+          if (transformCenter.x !== null || transformCenter.y !== null){
             transformCenter = projection.project(mainView.center,overviewSpatialReference);
             overView.goTo({
                 position: {
@@ -268,7 +269,7 @@
                   z:12000000,
                 }, 
             });
-//          }  
+          }  
         });
       
         function drawExtentAndSync() {
@@ -290,12 +291,12 @@
             () => mainView.extent,
                 (extent) => {
                 //transform the mainView extent into something that SceneViewer can handle
- //                if (!!transformCenter.x || !!transformCenter.y) {
+                 if (transformCenter.x !== null || transformCenter.y !== null) {
                   const transformExtent = projection.project(extent,overviewSpatialReference);
                     extentDebouncer().then(() => {
                       extent3Dgraphic.geometry = transformExtent;
                     });
- //                  }
+                   }
  //                console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
   //                console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
   //                console.log("overViewCenterX: ",overView.center.x,"overViewCenterY: ",overView.center.y);
