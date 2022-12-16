@@ -174,7 +174,8 @@
         const overviewSpatialReference = new SpatialReference({
             wkid: 3857 //WebMercator
           });
-        let transformCenter = projection.project(mainView.center,overviewSpatialReference);
+        if (mainView.center.x !== null || mainView.center.y !== null){
+          let transformCenter = projection.project(mainView.center,overviewSpatialReference);
 
         // Create a SceneView for the overview map
           const overView = new SceneView({
@@ -205,6 +206,7 @@
               tilt: 0
             }
           });
+        
         // Remove the default widgets
         overView.ui.components = [];
 
@@ -258,9 +260,11 @@
         });
 
         const extentDebouncer = promiseUtils.debounce(() => {
+
           //sync the overview Scene center when the main map moves
-          if (transformCenter.x !== null || transformCenter.y !== null){
             transformCenter = projection.project(mainView.center,overviewSpatialReference);
+            if (transformCenter !== null){
+            console.log("mainViewCenter: ",transformCenter);
             overView.goTo({
                 position: {
                   spatialReference: overviewSpatialReference,
@@ -269,7 +273,7 @@
                   z:12000000,
                 }, 
             });
-          }  
+            }  
         });
       
         function drawExtentAndSync() {
@@ -291,13 +295,13 @@
             () => mainView.extent,
                 (extent) => {
                 //transform the mainView extent into something that SceneViewer can handle
-                 if (transformCenter.x !== null || transformCenter.y !== null) {
+                 if (mainView.center.x !== null || mainView.center.y !== null) {
                   const transformExtent = projection.project(extent,overviewSpatialReference);
                     extentDebouncer().then(() => {
                       extent3Dgraphic.geometry = transformExtent;
                     });
                    }
- //                console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
+  //               console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
   //                console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
   //                console.log("overViewCenterX: ",overView.center.x,"overViewCenterY: ",overView.center.y);
                   },
@@ -306,7 +310,8 @@
                   }
           );
         }
-       });
+       } 
+      });
     })
     </script>
   </head>
