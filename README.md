@@ -15,7 +15,7 @@ where ``<webmap ID>`` is any ArcGIS Online webmap item.
 
 Example: [https://davidasbury.github.io/scene-overview-map/?webmap=22d1524dde5f4e5b9670545f5b853517](https://davidasbury.github.io/scene-overview-map/?webmap=22d1524dde5f4e5b9670545f5b853517)
 
-The main map can be in **any** projection.
+The main map can use **any** projection.
 
 ### To change the overview map:
 
