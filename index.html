@@ -308,7 +308,7 @@
                  if (mainView.center.x !== null || mainView.center.y !== null) {
                   const transformExtent = projection.project(extent,overviewSpatialReference);
                     extentDebouncer().then(() => {
-                      if (mainView.zoom <= 6){
+                      if (mainView.zoom <= 7.9){
                         extentCenterPoint.geometry = null;
                         extent3Dgraphic.geometry = transformExtent;
                         overView.graphics.add(extent3Dgraphic);
