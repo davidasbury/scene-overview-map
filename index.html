@@ -264,8 +264,8 @@
           //sync the overview Scene center when the main map moves
             transformCenter = projection.project(mainView.center,overviewSpatialReference);
             if (transformCenter !== null){
-            console.log("mainViewCenter: ",transformCenter);
-            console.log("LOD: ",mainView.zoom);
+//            console.log("mainViewCenter: ",transformCenter);
+//            console.log("LOD: ",mainView.zoom);
             overView.goTo({
                 position: {
                   spatialReference: overviewSpatialReference,
@@ -308,6 +308,7 @@
                  if (mainView.center.x !== null || mainView.center.y !== null) {
                   const transformExtent = projection.project(extent,overviewSpatialReference);
                     extentDebouncer().then(() => {
+                      // If mainView is at small scales, draw an extent rectangle on the overView. If it is zoomed in, draw a point
                       if (mainView.zoom <= 7.9){
                         extentCenterPoint.geometry = null;
                         extent3Dgraphic.geometry = transformExtent;
@@ -321,8 +322,8 @@
                     });
                    }
   //               console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
-  //                console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
-  //                console.log("overViewCenterX: ",overView.center.x,"overViewCenterY: ",overView.center.y);
+  //               console.log("transformCenterX: ",transformCenter.x,"transformCenterY: ",transformCenter.y);
+  //               console.log("overViewCenterX: ",overView.center.x,"overViewCenterY: ",overView.center.y);
                   },
                   {
                   initial: true
