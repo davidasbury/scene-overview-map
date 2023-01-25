@@ -175,7 +175,7 @@
             wkid: 3857 //WebMercator
           });
         if (mainView.center.x !== null || mainView.center.y !== null){
-          let transformCenter = projection.project(mainView.center,overviewSpatialReference);
+          var transformCenter = projection.project(mainView.center,overviewSpatialReference);
 
         // Create a SceneView for the overview map
           const overView = new SceneView({
@@ -265,6 +265,7 @@
             transformCenter = projection.project(mainView.center,overviewSpatialReference);
             if (transformCenter !== null){
             console.log("mainViewCenter: ",transformCenter);
+            console.log("LOD: ",mainView.zoom);
             overView.goTo({
                 position: {
                   spatialReference: overviewSpatialReference,
@@ -288,7 +289,16 @@
               }
             }
           });
-          overView.graphics.add(extent3Dgraphic);
+          const extentCenterPoint = new Graphic({
+            geometry: null,
+            symbol: {
+              type: "simple-marker",
+              outline: { style: "none", color: [0, 0, 0, 0] },
+              size: 4,
+              color: [255,0,0,1]
+            }
+          });
+
  
           // Sync the overview map whenever the main view moves
           reactiveUtils.watch(
@@ -298,7 +308,16 @@
                  if (mainView.center.x !== null || mainView.center.y !== null) {
                   const transformExtent = projection.project(extent,overviewSpatialReference);
                     extentDebouncer().then(() => {
-                      extent3Dgraphic.geometry = transformExtent;
+                      if (mainView.zoom <= 6){
+                        extentCenterPoint.geometry = null;
+                        extent3Dgraphic.geometry = transformExtent;
+                        overView.graphics.add(extent3Dgraphic);
+                      }
+                      else {
+                        extent3Dgraphic.geometry = null;
+                        extentCenterPoint.geometry = transformCenter;
+                        overView.graphics.add(extentCenterPoint);
+                      }
                     });
                    }
   //               console.log("mainViewCenterX: ",mainView.center.x,"mainViewCenterY: ",mainView.center.y);
